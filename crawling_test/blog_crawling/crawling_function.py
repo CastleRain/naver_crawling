@@ -1,6 +1,5 @@
 # 시스템
 import os
-import sys
 import re
 import json
 
@@ -10,10 +9,10 @@ import requests
 from bs4 import BeautifulSoup
 
 import pandas as pd
-
 from tqdm import tqdm
-# 태그 데이터를 삭제하는 코드
 
+
+# 폴더 생성
 
 def createFolder(directory):
     try:
@@ -21,6 +20,8 @@ def createFolder(directory):
             os.makedirs(directory)
     except OSError:
         pass
+
+# 태그 데이터를 삭제하는 코드
 
 
 def tag_remove(word):
@@ -46,6 +47,8 @@ def naver_title_check(search_word, title):
         for word in words:
             if word.lower() not in title.lower():
                 return True
+
+# 네이버 API사용
 
 
 def naver_api(search_word, start, display):
@@ -93,7 +96,7 @@ def item_parsing(search_word, start, display, repeat_num):
     cnt = 0
     # 제목에서 해당 제품의 이름이 5번 연속 안나온다면 패스
     while repeat:
-        print(cnt)
+
         for blog in blog_search["items"]:
             # 블로그 코드
             code = blog["link"][blog["link"].find("logNo=") + 6:]
@@ -197,6 +200,8 @@ def search_word(word):
 
     return result
 
+# 키워드별로 확인하는것
+
 
 def df_keyword_contains(df):
 
@@ -268,6 +273,8 @@ def df_check_ad(df):
 
 
 def service_start(word):
+    print(f"검색어 : {word}")
+    print("검색을 시작합니다.")
     df = pd.DataFrame()
     url, title = [], []
     words = search_word(word)
@@ -309,4 +316,6 @@ def service_start(word):
     df["img_cnt"] = img_cnt_list
     df_keyword_contains(df)
     df_check_ad(df)
+
+    print("종료되었습니다.")
     return df
