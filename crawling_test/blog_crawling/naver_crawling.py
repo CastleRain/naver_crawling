@@ -7,7 +7,9 @@ year, month, day = now.year, now.month, now.day
 createFolder(f"./result/{year}{month}{day}")
 
 
-words = input("제품명을 입력해주세요 : ")
-df = service_start(words)
-df.to_csv(f"./result/{year}{month}{day}/{words} 결과.csv",
-          index=False, encoding="utf-8-sig")
+if __name__ == "__main__":
+    # company = input("제조 회사 이름을 작성해주세요")
+    words = input("제품명을 입력해주세요 : ")
+    df = service_start(words)
+    df.to_csv(f"./result/{year}{month}{day}/{words} 결과.csv",
+              index=False, encoding="utf-8-sig")
