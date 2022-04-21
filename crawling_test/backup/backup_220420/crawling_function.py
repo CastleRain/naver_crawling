@@ -48,19 +48,6 @@ def naver_title_check(search_word, title):
             if word.lower() not in title.lower():
                 return True
 
-
-def new_naver_title_check(search_word, title):
-    search_word_cnt = len(search_word)
-    cnt = 0
-
-    for words in search_word.split():
-        for word in words:
-            if word.lower() in title.lower():
-                cnt += 1
-    if cnt / search_word_cnt <= 0.8:  # 만약 정확도가 80%이하라면 True 리턴
-        return True
-    else:
-        return False
 # 네이버 API사용
 
 
@@ -90,12 +77,11 @@ def naver_api(search_word, start, display):
 # search_word : 어떤 제품을 검색하는지
 # repeat_num : 해당 제품이 제목에서 몇번 안나올때까지 검색을 진행할 지
 # 최대 1000개까지만 진행하자
-def item_parsing(company, search_word, start, display, repeat_num):
+def item_parsing(search_word, start, display, repeat_num):
 
     cnt = 0
-    blog_search = naver_api(company + " " + search_word, start, display)
-    test = company + " " + search_word
-    print(f"naver api {test}")
+    blog_search = naver_api(search_word, start, display)
+
     # result : url
     # writer : 작성자 이름
     # code : 블로그 코드
@@ -106,7 +92,6 @@ def item_parsing(company, search_word, start, display, repeat_num):
     blog_code = []
     blog_title = []
     blog_description = []
-    blog_date = []
     repeat = True
     cnt = 0
     # 제목에서 해당 제품의 이름이 5번 연속 안나온다면 패스
@@ -138,9 +123,6 @@ def item_parsing(company, search_word, start, display, repeat_num):
             blog_title.append(title)
             # 블로그 요약 추가
             blog_description.append(description)
-            # 블로그 작성 시간 추가
-            blog_date.append(blog["postdate"])
-
             # 본문 크롤링을 위한 URL주소 추가
             blog_result.append(
                 f"https://blog.naver.com/PostView.naver?blogId={writer}&logNo={code}")
@@ -148,8 +130,7 @@ def item_parsing(company, search_word, start, display, repeat_num):
             if start + display <= blog_search["total"]:
                 cnt += 1
                 start += display
-                blog_search = naver_api(
-                    company + " " + search_word, start, display)
+                blog_search = naver_api(search_word, start, display)
             else:
                 repeat = False
 
@@ -157,7 +138,7 @@ def item_parsing(company, search_word, start, display, repeat_num):
                 break
         except:
             break
-    return blog_result, blog_writer, blog_code, blog_title, blog_description, blog_date
+    return blog_result, blog_writer, blog_code, blog_title, blog_description
 
 # 네이버 블로그 크롤링
 
@@ -226,11 +207,8 @@ def df_keyword_contains(df):
 
     keyword_contains = ["허락", "내돈내산", "리얼후기", "협찬",
                         "체험단", "coupa.ng", "<", ">", "♡", "♥", "구매후기"]
-
-    keyword_contains_many = [["한달", "한 달", "1달", "1개월"], [
-        "두달", "두 달", "2달", "2개월"], ["세달", "세 달", "3달", "3개월"]]
     keyword_cnt = ["솔직", "비교", "ㅋ", "ㅋㅋ", "ㅋㅋㅋ", "ㅋㅋㅋㅋ", "...",
-                   "....", "ㅜ", "ㅜㅜ", "ㅜㅜㅜ", "ㅜㅜㅜㅜ", "ㅠ", "ㅠㅠ", "ㅠㅠㅠ", "ㅠㅠㅠㅠ", "장점", "단점"]
+                   "....", "ㅜ", "ㅜㅜ", "ㅜㅜㅜ", "ㅜㅜㅜㅜ", "ㅠ", "ㅠㅠ", "ㅠㅠㅠ", "ㅠㅠㅠㅠ"]
     keyword_badword = ["개좋다", "개좋음", "개멋짐", "개빠름", "개큼", "존나", "걍", "씹창"]
 
     for key in keyword_cnt:
@@ -245,12 +223,6 @@ def df_keyword_contains(df):
 
             else:
                 df.loc[i, key+" 키워드"] = "0"
-        for key in keyword_contains_many:
-            for k in key:
-                df.loc[i, key[0] + " 키워드"] = "0"
-                if k in content:
-                    df.loc[i, key[0]+" 키워드"] = "1"
-                    break
 
         for cont in content.split():
             for key in keyword_cnt:
@@ -297,33 +269,24 @@ def df_check_ad(df):
                         df.loc[i, "광고 분류2"] = 2
                         break
 
-
-# def column_sort(df):
-
-#     df
-
 # 서비스 시작
 
 
-def service_start(company, word):
-    print(f"검색어 : {company} {word}")
+def service_start(word):
+    print(f"검색어 : {word}")
     print("검색을 시작합니다.")
     df = pd.DataFrame()
-    url, title, post_date = [], [], []
+    url, title = [], []
     words = search_word(word)
 
     for word in words:
-        blog_result, blog_writer, blog_code, blog_title, blog_description, blog_date = item_parsing(
-            company, word, 1, 100, 3)
+        blog_result, blog_writer, blog_code, blog_title, blog_description = item_parsing(
+            word, 1, 100, 3)
         url += blog_result
         title += blog_title
-        post_date += blog_date
 
     df["url"] = url
     df["title"] = title
-    df["post_date"] = post_date
-    df["검색어"] = word
-    df["브랜드 명"] = company
 
     # # 중복 url삭제
     df = df.drop_duplicates(["url"]).reset_index(drop=True)
